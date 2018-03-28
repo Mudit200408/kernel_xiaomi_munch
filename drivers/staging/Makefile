@@ -58,3 +58,4 @@ obj-$(CONFIG_EROFS_FS)		+= erofs/
 obj-$(CONFIG_MISYSINFOFREADER)		+= misysinfofreader/
 obj-$(CONFIG_KPERFEVENTS)	+= kperfevents/
 obj-$(CONFIG_CAM_RECLAIM)	+= cam-reclaim/
+obj-$(CONFIG_QCA_CLD_WLAN)	+= qcacld-3.0/
