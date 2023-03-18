@@ -2314,4 +2314,7 @@ static inline QDF_STATUS dp_runtime_init(struct dp_soc *soc)
  */
 void dp_peer_flush_frags(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 			 uint8_t *peer_mac);
+
+
+
 #endif /* #ifndef _DP_INTERNAL_H_ */
