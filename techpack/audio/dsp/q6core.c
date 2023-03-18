@@ -944,7 +944,7 @@ int32_t q6core_avcs_load_unload_modules(struct avcs_load_unload_modules_payload
 		return -EINVAL;
 	}
 
-	if ((q6core_lcl.avs_state != ADSP_MODULES_READY_AVS_STATE)
+if ((q6core_lcl.avs_state != ADSP_MODULES_READY_AVS_STATE)
 		&& (preload_type == AVCS_LOAD_MODULES)) {
 		timeout = jiffies +
 			msecs_to_jiffies(ADSP_STATE_READY_TIMEOUT_MS);
