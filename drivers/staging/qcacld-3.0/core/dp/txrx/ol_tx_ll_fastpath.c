@@ -482,6 +482,7 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 						tso_info->curr_seg = next_seg;
 						ol_free_remaining_tso_segs(vdev,
 							&msdu_info, true);
+
 						if (segments ==
 						    (msdu_info.tso_info.num_segs
 						     - 1))

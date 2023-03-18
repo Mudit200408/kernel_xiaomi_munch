@@ -3641,6 +3641,50 @@ void hdd_set_qmi_stats_enabled(struct hdd_context *hdd_ctx)
 }
 #endif
 
+static void
+hdd_install_key_comp_cb(struct wma_install_key_complete_param *param)
+{
+	struct hdd_context *hdd_ctx;
+	struct hdd_adapter *adapter;
+
+	if (!param) {
+		hdd_err("param is NULL");
+		return;
+	}
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("hdd ctx is NULL");
+		return;
+	}
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, param->vdev_id);
+	if (!adapter) {
+		hdd_err("adapter is NULL");
+		return;
+	}
+
+	qdf_event_set(&adapter->install_key_complete);
+}
+
+#define HDD_INSTALL_KEY_TIMEOUT 200
+void hdd_start_install_key(struct hdd_adapter *adapter)
+{
+	hdd_enter();
+	qdf_event_reset(&adapter->install_key_complete);
+}
+
+int hdd_wait_for_install_key_complete(struct hdd_adapter *adapter)
+{
+	QDF_STATUS status;
+
+	hdd_enter();
+	status = qdf_wait_for_event_completion(&adapter->install_key_complete,
+					       HDD_INSTALL_KEY_TIMEOUT);
+	hdd_debug("exit with status %d", status);
+	return qdf_status_to_os_return(status);
+}
+
 int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 {
 	int ret = 0;
@@ -3761,6 +3805,8 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 			ret = qdf_status_to_os_return(status);
 			goto psoc_close;
 		}
+
+		wma_register_install_key_complete_cb(hdd_install_key_comp_cb);
 
 		hdd_set_qmi_stats_enabled(hdd_ctx);
 
@@ -5023,7 +5069,6 @@ hdd_alloc_station_adapter(struct hdd_context *hdd_ctx, tSirMacAddr mac_addr,
 			QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_NORMAL;
 	}
 	adapter->latency_level = latency_level;
-
 	/* set dev's parent to underlying device */
 	SET_NETDEV_DEV(dev, hdd_ctx->parent_dev);
 	hdd_wmm_init(adapter);
@@ -6484,6 +6529,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 	qdf_mutex_create(&adapter->blocked_scan_request_q_lock);
 	qdf_event_create(&adapter->acs_complete_event);
 	qdf_event_create(&adapter->peer_cleanup_done);
+	qdf_event_create(&adapter->install_key_complete);
 	hdd_sta_info_init(&adapter->sta_info_list);
 	hdd_sta_info_init(&adapter->cache_sta_info_list);
 
@@ -6544,6 +6590,7 @@ static void __hdd_close_adapter(struct hdd_context *hdd_ctx,
 	qdf_list_destroy(&adapter->blocked_scan_request_q);
 	qdf_mutex_destroy(&adapter->blocked_scan_request_q_lock);
 	policy_mgr_clear_concurrency_mode(hdd_ctx->psoc, adapter->device_mode);
+	qdf_event_destroy(&adapter->install_key_complete);
 	qdf_event_destroy(&adapter->acs_complete_event);
 	qdf_event_destroy(&adapter->peer_cleanup_done);
 	hdd_adapter_feature_update_work_deinit(adapter);
@@ -15394,6 +15441,7 @@ void hdd_deinit(void)
 
 static void hdd_set_adapter_wlm_def_level(struct hdd_context *hdd_ctx)
 {
+
 	struct hdd_adapter *adapter, *next_adapter = NULL;
 	wlan_net_dev_ref_dbgid dbgid = NET_DEV_HOLD_GET_ADAPTER;
 	int ret;
