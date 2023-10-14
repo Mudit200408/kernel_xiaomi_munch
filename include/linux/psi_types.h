@@ -122,17 +122,14 @@ struct psi_trigger {
 	 */
 	u64 last_event_time;
 
-	/* Refcounting to prevent premature destruction */
-	struct kref refcount;
-
-	/* Task that created the trigger */
-	char comm[TASK_COMM_LEN];
-	struct timer_list wdog_timer;
-
 	/*
 	 * Stall time growth for the last event in ns.
 	 */
 	u64 last_event_growth;
+
+	/* Task that created the trigger */
+	char comm[TASK_COMM_LEN];
+	struct timer_list wdog_timer;
 };
 
 struct psi_group {
